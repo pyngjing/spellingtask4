@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spelling Superhero Mission</title>
+<style>
+:root{
+  --navy:#17324d; --blue:#2563eb; --purple:#7c3aed; --pink:#ec4899;
+  --green:#22c55e; --yellow:#facc15; --red:#ef4444;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; padding:18px;
+  font-family:Arial,Helvetica,sans-serif; color:var(--navy);
+  background:linear-gradient(135deg,#eef6ff,#fff6e8);
+}
+.wrap{max-width:1050px;margin:auto}
+header{
+  background:linear-gradient(120deg,var(--blue),var(--purple),var(--pink));
+  color:white;padding:28px;border-radius:26px;text-align:center;
+  box-shadow:0 14px 30px rgba(23,50,77,.18)
+}
+header h1{font-size:clamp(34px,6vw,60px);margin:0}
+header p{font-size:19px;margin:10px 0 0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
+.stat{
+  background:white;border-radius:16px;padding:14px;text-align:center;
+  font-weight:800;box-shadow:0 7px 18px rgba(23,50,77,.08)
+}
+.card,.finish{
+  background:white;border-radius:26px;padding:24px;
+  box-shadow:0 14px 32px rgba(23,50,77,.13)
+}
+.icon{text-align:center;font-size:70px;margin:6px 0}
+.sentence{
+  background:#eef5ff;border:2px solid #cfe1ff;border-radius:20px;
+  padding:24px;text-align:center;font-size:clamp(23px,3vw,33px);line-height:1.45
+}
+.blank{display:inline-block;min-width:145px;border-bottom:4px solid var(--purple);color:var(--purple);font-weight:900}
+.row{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:17px 0}
+button{border:0;border-radius:13px;padding:12px 17px;font-weight:900;font-size:17px;cursor:pointer}
+.listen{background:var(--purple);color:white}
+.hint{background:var(--yellow)}
+.clear{background:#e8edf5;color:var(--navy)}
+.check{background:var(--green);color:white;font-size:20px}
+.next{background:var(--pink);color:white;font-size:20px;display:none}
+.hintbox{
+  display:none;background:#fff8d5;border:2px dashed #d5ad32;border-radius:13px;
+  padding:12px;text-align:center;margin:0 auto 12px;max-width:760px
+}
+.answer,.keyboard{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:18px auto}
+.answer{min-height:62px}
+.slot{
+  width:43px;height:52px;border:2px solid #aec0d5;border-bottom:5px solid var(--navy);
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:30px;font-weight:900;background:#fbfdff
+}
+.key{
+  width:55px;height:55px;padding:0;border:2px solid #9eb6eb;
+  background:linear-gradient(#fff,#eef4ff);font-size:28px;box-shadow:0 5px 0 #ccd6eb
+}
+.key.used{opacity:.25;pointer-events:none}
+.feedback{text-align:center;min-height:42px;font-size:22px;font-weight:900}
+.good{color:var(--green)} .bad{color:var(--red)}
+.finish{display:none;text-align:center;padding:40px}
+.finish h2{font-size:45px;margin:10px 0}
+@media(max-width:700px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .slot{width:35px;height:47px;font-size:25px}
+  .key{width:47px;height:49px;font-size:24px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>🦸 Primary 2 English</div>
+  <h1>Spelling Superhero Mission</h1>
+  <p>Read the sentence, build the missing word and collect all 10 word crystals!</p>
+</header>
+
+<section class="stats">
+  <div class="stat">Mission <span id="qno">1</span>/10</div>
+  <div class="stat">Score <span id="score">0</span></div>
+  <div class="stat">Correct <span id="correct">0</span></div>
+  <div class="stat">Lives <span id="lives">❤️❤️❤️</span></div>
+</section>
+
+<main class="card" id="game">
+  <div class="row"><button class="listen" id="listenBtn">🔊 Read aloud</button></div>
+  <div class="icon" id="icon">🗣️</div>
+  <div class="sentence" id="sentence"></div>
+
+  <div class="row">
+    <button class="hint" id="hintBtn">💡 Hint</button>
+    <button class="clear" id="clearBtn">↺ Clear</button>
+  </div>
+
+  <div class="hintbox" id="hintBox"></div>
+  <div class="answer" id="answer"></div>
+  <div class="keyboard" id="keyboard"></div>
+
+  <div class="row">
+    <button class="check" id="checkBtn">✓ Check spelling</button>
+    <button class="next" id="nextBtn">Next mission →</button>
+  </div>
+
+  <div class="feedback" id="feedback"></div>
+</main>
+
+<section class="finish" id="finish">
+  <div style="font-size:72px">🏆</div>
+  <h2>Mission Complete!</h2>
+  <p id="result"></p>
+  <p id="message"></p>
+  <button class="listen" onclick="location.reload()">Play again</button>
+</section>
+</div>
+
+<script>
+const questions = [
+ {word:"yelled", sentence:"The child _____ in pain!", hint:"It means shouted loudly.", icon:"🗣️"},
+ {word:"glared", sentence:"Zack _____ at Dora angrily.", hint:"It means looked angrily.", icon:"😠"},
+ {word:"whispering", sentence:"What are they _____ about?", hint:"Speaking very softly.", icon:"🤫"},
+ {word:"garbage", sentence:"We should clear our _____ daily.", hint:"Another word for rubbish.", icon:"🗑️"},
+ {word:"nowhere", sentence:"The watch was _____ to be found.", hint:"Not in any place.", icon:"⌚"},
+ {word:"rubbish", sentence:"Look at all this _____ on the floor!", hint:"Waste or unwanted things.", icon:"🧹"},
+ {word:"scoop", sentence:"One _____ of ice cream for me, please!", hint:"A rounded amount taken with a spoon.", icon:"🍦"},
+ {word:"containers", sentence:"Let's bring our own _____ when we buy food.", hint:"Things used to hold food.", icon:"🥡"},
+ {word:"dashed", sentence:"A cat suddenly _____ across the road in front of us.", hint:"Ran very quickly.", icon:"🐈"},
+ {word:"remember", sentence:"Can you _____ where the teacher kept the worksheets?", hint:"To keep something in your mind.", icon:"🧠"}
+];
+
+let index=0, score=0, correct=0, lives=3, chosen=[], locked=false;
+const $=id=>document.getElementById(id);
+
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function render(){
+  locked=false;
+  chosen=[];
+  $("feedback").textContent="";
+  $("feedback").className="feedback";
+  $("hintBox").style.display="none";
+  $("checkBtn").style.display="inline-block";
+  $("nextBtn").style.display="none";
+
+  const q=questions[index];
+  const parts=q.sentence.split("_____");
+  $("sentence").innerHTML=parts[0]+'<span class="blank">?</span>'+(parts[1]||"");
+  $("icon").textContent=q.icon;
+
+  $("answer").innerHTML="";
+  for(let i=0;i<q.word.length;i++){
+    const s=document.createElement("div");
+    s.className="slot";
+    $("answer").appendChild(s);
+  }
+
+  $("keyboard").innerHTML="";
+  shuffle(q.word.split("")).forEach(letter=>{
+    const b=document.createElement("button");
+    b.className="key";
+    b.textContent=letter;
+    b.onclick=()=>{
+      if(locked || chosen.length>=q.word.length) return;
+      chosen.push({letter,button:b});
+      b.classList.add("used");
+      updateSlots();
+    };
+    $("keyboard").appendChild(b);
+  });
+
+  $("qno").textContent=index+1;
+  $("score").textContent=score;
+  $("correct").textContent=correct;
+  $("lives").textContent="❤️".repeat(lives)+"🤍".repeat(3-lives);
+}
+
+function updateSlots(){
+  [...$("answer").children].forEach((slot,i)=>{
+    slot.textContent=chosen[i]?.letter || "";
+  });
+}
+
+$("clearBtn").onclick=()=>{
+  if(locked) return;
+  chosen.forEach(x=>x.button.classList.remove("used"));
+  chosen=[];
+  updateSlots();
+  $("feedback").textContent="";
+};
+
+$("hintBtn").onclick=()=>{
+  const q=questions[index];
+  $("hintBox").textContent=q.hint+" First letter: "+q.word[0].toUpperCase()+". It has "+q.word.length+" letters.";
+  $("hintBox").style.display="block";
+};
+
+$("listenBtn").onclick=()=>{
+  if(!("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const q=questions[index];
+  const utter=new SpeechSynthesisUtterance(q.sentence.replace("_____",q.word));
+  utter.rate=0.82;
+  speechSynthesis.speak(utter);
+};
+
+$("checkBtn").onclick=()=>{
+  if(locked) return;
+  const q=questions[index];
+  const attempt=chosen.map(x=>x.letter).join("");
+
+  if(attempt.length<q.word.length){
+    $("feedback").textContent="Choose all the letters first.";
+    $("feedback").className="feedback bad";
+    return;
+  }
+
+  locked=true;
+  $("checkBtn").style.display="none";
+  $("nextBtn").style.display="inline-block";
+
+  if(attempt===q.word){
+    score+=10;
+    correct++;
+    $("feedback").textContent="Excellent! You collected a word crystal! ✨";
+    $("feedback").className="feedback good";
+  }else{
+    lives=Math.max(0,lives-1);
+    $("feedback").innerHTML='Almost! The correct spelling is <strong>'+q.word+'</strong>.';
+    $("feedback").className="feedback bad";
+    [...$("answer").children].forEach((slot,i)=>slot.textContent=q.word[i]);
+  }
+
+  $("score").textContent=score;
+  $("correct").textContent=correct;
+  $("lives").textContent="❤️".repeat(lives)+"🤍".repeat(3-lives);
+};
+
+$("nextBtn").onclick=()=>{
+  index++;
+  if(index>=questions.length){
+    $("game").style.display="none";
+    $("finish").style.display="block";
+    $("result").textContent="You scored "+score+" out of 100 and spelled "+correct+" out of 10 words correctly.";
+    let message="Keep practising. Every try makes you stronger!";
+    if(correct===10) message="Perfect score! You are a Spelling Superhero!";
+    else if(correct>=8) message="Excellent work! You are almost a Spelling Superhero!";
+    else if(correct>=6) message="Good effort! Review the words you missed and try again.";
+    $("message").textContent=message;
+  }else{
+    render();
+  }
+};
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="Enter"){
+    if($("nextBtn").style.display==="inline-block") $("nextBtn").click();
+    else $("checkBtn").click();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
